@@ -1,0 +1,106 @@
+# Golden legal Q&A cases for RAG recall@5 evaluation.
+# expected_source is matched as a substring against retrieved file_name metadata.
+cases:
+  - id: labor_001
+    question: 国家实行劳动者每日工作时间不超过多少小时？
+    expected_source: 劳动法
+
+  - id: labor_002
+    question: 法定休假日安排劳动者工作工资报酬标准是什么？
+    expected_source: 劳动法
+
+  - id: labor_003
+    question: 工资应当以什么形式支付给劳动者？
+    expected_source: 劳动法
+
+  - id: labor_004
+    question: 用人单位与劳动者发生劳动争议可以通过哪些途径解决？
+    expected_source: 劳动法
+
+  - id: labor_005
+    question: 劳动合同应当以什么形式订立？
+    expected_source: 劳动法
+
+  - id: labor_contract_001
+    question: 三年以上固定期限劳动合同试用期最长多久？
+    expected_source: 劳动合同法
+
+  - id: labor_contract_002
+    question: 劳动者在试用期内提前几天通知可以解除劳动合同？
+    expected_source: 劳动合同法
+
+  - id: labor_contract_003
+    question: 劳动者连续工作满十年是否应当订立无固定期限劳动合同？
+    expected_source: 劳动合同法
+
+  - id: labor_contract_004
+    question: 用人单位依照第四十条规定解除劳动合同是否需要支付经济补偿？
+    expected_source: 劳动合同法
+
+  - id: labor_contract_005
+    question: 经济补偿按劳动者在本单位工作年限如何计算？
+    expected_source: 劳动合同法
+
+  - id: labor_contract_006
+    question: 试用期工资不得低于劳动合同约定工资的百分之多少？
+    expected_source: 劳动合同法
+
+  - id: civil_code_001
+    question: 合同是民事主体之间设立变更终止什么关系的协议？
+    expected_source: 民法典
+
+  - id: civil_code_002
+    question: 当事人一方不履行合同义务应当承担什么违约责任？
+    expected_source: 民法典
+
+  - id: civil_code_003
+    question: 买卖合同是出卖人转移什么于买受人？
+    expected_source: 民法典
+
+  - id: civil_code_004
+    question: 租赁合同是出租人将租赁物交付承租人使用收益承租人支付什么？
+    expected_source: 民法典
+
+  - id: civil_code_005
+    question: 民法典是否禁止高利放贷？
+    expected_source: 民法典
+
+  - id: civil_code_006
+    question: 行为人因过错侵害他人民事权益造成损害应当承担什么责任？
+    expected_source: 民法典
+
+  - id: consumer_001
+    question: 消费者享有人身财产安全不受损害的权利叫什么？
+    expected_source: 消费者
+
+  - id: consumer_002
+    question: 经营者提供商品有欺诈行为惩罚性赔偿标准是什么？
+    expected_source: 消费者
+
+  - id: consumer_003
+    question: 收到商品之日起七日内不符合质量要求可以怎样处理？
+    expected_source: 消费者
+
+  - id: consumer_004
+    question: 消费者和经营者发生权益争议可以通过哪些途径解决？
+    expected_source: 消费者
+
+  - id: criminal_001
+    question: 已满十六周岁的人犯罪是否应当负刑事责任？
+    expected_source: 刑法
+
+  - id: criminal_002
+    question: 故意杀人罪的量刑规定是什么？
+    expected_source: 刑法
+
+  - id: criminal_003
+    question: 盗窃公私财物数额较大如何处罚？
+    expected_source: 刑法
+
+  - id: criminal_004
+    question: 诈骗公私财物数额较大的如何定罪处罚？
+    expected_source: 刑法
+
+  - id: criminal_005
+    question: 醉酒的人犯罪是否负刑事责任？
+    expected_source: 刑法

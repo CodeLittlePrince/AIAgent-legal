@@ -1,0 +1,87 @@
+version: "1.0"
+description: Agent E2E benchmark tasks covering single-turn, multi-turn, intent switch, and degradation.
+
+tasks:
+  - id: single_turn_legal
+    name: 单轮法律咨询
+    category: single_turn
+    turns:
+      - user: "劳动合同试用期最长多久？"
+        expect:
+          intent: legal
+          citations: true
+          disclaimer: true
+          answer_contains_any: ["试用期", "六个月", "6个月"]
+          task_success: true
+
+  - id: single_turn_weather
+    name: 单轮天气查询
+    category: single_turn
+    turns:
+      - user: "北京今天天气怎么样？"
+        expect:
+          intent: weather
+          tool_success: true
+          answer_contains_any: ["北京", "天气", "温度", "气温", "晴"]
+          task_success: true
+
+  - id: single_turn_general
+    name: 单轮通用对话
+    category: single_turn
+    turns:
+      - user: "你好，介绍一下你自己"
+        expect:
+          intent: general
+          citations: false
+          disclaimer: false
+          task_success: true
+
+  - id: weather_multi_turn_followup
+    name: 多轮天气追问
+    category: multi_turn
+    turns:
+      - user: "上海今天天气怎么样？"
+        expect:
+          intent: weather
+          tool_success: true
+          task_success: true
+      - user: "那上海明天天气呢？"
+        expect:
+          intent: weather
+          memory_coherence: true
+          memory_context_from_turn: 0
+          memory_keywords_any: ["上海", "明天", "预报", "天气", "气温"]
+          task_success: true
+
+  - id: intent_switch_general_to_legal
+    name: 跨 intent 切换 general → legal
+    category: intent_switch
+    turns:
+      - user: "你好"
+        expect:
+          intent: general
+          task_success: true
+      - user: "劳动合同试用期最长多久？"
+        expect:
+          intent: legal
+          citations: true
+          disclaimer: true
+          task_success: true
+
+  - id: ambiguous_input_degradation
+    name: 歧义输入降级
+    category: degradation
+    turns:
+      - user: "天气和法律问题"
+        expect:
+          intent: general
+          task_success: true
+
+  - id: weather_invalid_location
+    name: 无效地点天气降级
+    category: degradation
+    turns:
+      - user: "火星今天天气怎么样？"
+        expect:
+          intent: weather
+          task_success: true
