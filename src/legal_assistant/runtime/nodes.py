@@ -14,6 +14,7 @@ import httpx
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 
 from legal_assistant.config import settings
 from legal_assistant.knowledge.legal_qa import (
@@ -86,7 +87,7 @@ def create_llm() -> ChatOpenAI:
     """
     return ChatOpenAI(
         model=settings.deepseek_model,
-        api_key=settings.deepseek_api_key,
+        api_key=SecretStr(settings.deepseek_api_key) if settings.deepseek_api_key else None,
         base_url=settings.deepseek_base_url,
         http_async_client=httpx.AsyncClient(trust_env=False),
     )

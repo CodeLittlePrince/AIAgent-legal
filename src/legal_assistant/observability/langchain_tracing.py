@@ -9,6 +9,8 @@ from __future__ import annotations
 from contextvars import ContextVar
 from typing import Any
 
+from langchain_core.runnables.config import RunnableConfig
+
 from legal_assistant.observability.langfuse_client import get_langfuse
 
 _handler_var: ContextVar[Any | None] = ContextVar("langfuse_langchain_handler", default=None)
@@ -49,7 +51,7 @@ def get_langchain_callbacks() -> list[Any]:
     return [handler] if handler is not None else []
 
 
-def langchain_invoke_config() -> dict[str, Any]:
+def langchain_invoke_config() -> RunnableConfig:
     """构造 LangChain / LangGraph ``config`` 字典（含 callbacks）。"""
     callbacks = get_langchain_callbacks()
     if not callbacks:
