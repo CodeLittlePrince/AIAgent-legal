@@ -132,7 +132,11 @@ class BenchmarkRunner:
     def _get_client(self) -> httpx.Client:
         """获取 HTTP 客户端；若尚未创建则按 base_url 与 timeout 新建。"""
         if self._http_client is None:
-            self._http_client = httpx.Client(base_url=self.base_url, timeout=self.timeout)
+            self._http_client = httpx.Client(
+                base_url=self.base_url,
+                timeout=self.timeout,
+                trust_env=False,
+            )
             self._owns_client = True
         return self._http_client
 

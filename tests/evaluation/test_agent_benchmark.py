@@ -41,7 +41,7 @@ def mock_retriever():
 def mock_llm():
     llm = AsyncMock()
 
-    async def _ainvoke(messages):
+    async def _ainvoke(messages, *args, **kwargs):
         if isinstance(messages, list):
             last = messages[-1]
             content = getattr(last, "content", str(last))

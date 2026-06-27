@@ -48,6 +48,7 @@ Thumbs.db
 
 # Project
 *.log
+agent_benchmark_report.json
 .chroma/
 .chroma_data/
 web/node_modules/

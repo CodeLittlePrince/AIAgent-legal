@@ -75,6 +75,9 @@ services:
   langfuse-clickhouse:
     image: clickhouse/clickhouse-server:24
     user: "101:101"
+    ports:
+      - "8123:8123"
+      - "9000:9000"
     environment:
       CLICKHOUSE_DB: default
       CLICKHOUSE_USER: clickhouse

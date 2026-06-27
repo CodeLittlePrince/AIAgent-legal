@@ -19,7 +19,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -e ".[dev]"
+        run: pip install -e .
 
       - name: Run fast test suite (incl. spec §11 non-goals)
         run: >
