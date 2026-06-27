@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  fast:
+    runs-on: ubuntu-latest
+    env:
+      LANGFUSE_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run fast test suite (incl. spec §11 non-goals)
+        run: >
+          pytest tests/unit tests/integration tests/evaluation
+          -m "not slow and not benchmark"
+          -v --tb=short

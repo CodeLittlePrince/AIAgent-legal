@@ -421,9 +421,9 @@ def test_rule_based_intent(msg, expected):
 - Create: `src/legal_assistant/main.py`
 - Test: `tests/integration/test_api_chat.py`
 
-- [ ] **Step 1: Write schemas** — ChatRequest, ChatResponse, FeedbackRequest, Citation
+- [x] **Step 1: Write schemas** — ChatRequest, ChatResponse, FeedbackRequest, Citation
 
-- [ ] **Step 2: Write routes.py**
+- [x] **Step 2: Write routes.py**
   - `POST /api/v1/chat` — orchestrate memory → planner → graph → save → response
   - `GET /api/v1/sessions/{id}`
   - `DELETE /api/v1/sessions/{id}`
@@ -432,11 +432,11 @@ def test_rule_based_intent(msg, expected):
   - `GET /health`
   - `GET /metrics`
 
-- [ ] **Step 3: Write main.py** — lifespan hook for DB/redis init, optional auto-ingest
+- [x] **Step 3: Write main.py** — lifespan hook for DB/redis init, optional auto-ingest
 
-- [ ] **Step 4: Write integration test** with TestClient + mocked graph
+- [x] **Step 4: Write integration test** with TestClient + mocked graph
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run: `pytest tests/integration/test_api_chat.py -v`
 

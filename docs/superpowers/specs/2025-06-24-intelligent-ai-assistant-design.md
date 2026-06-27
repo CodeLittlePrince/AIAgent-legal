@@ -309,13 +309,15 @@ POST /api/v1/feedback
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| POST | `/api/v1/chat` | 主对话接口 |
+| POST | `/api/v1/chat` | 主对话接口（JSON 同步响应） |
+| POST | `/api/v1/chat/stream` | 流式对话接口（SSE：`session` / `intent` / `delta` / `citations` / `disclaimer` / `done`） |
 | GET | `/api/v1/sessions/{id}` | 获取会话历史 |
 | DELETE | `/api/v1/sessions/{id}` | 清除会话 |
 | POST | `/api/v1/knowledge/reindex` | 重建法律向量索引 |
 | POST | `/api/v1/feedback` | 用户反馈 → Langfuse score |
 | GET | `/health` | 健康检查（Redis/PG/Chroma/Langfuse 连通性） |
 | GET | `/metrics` | Prometheus metrics（可选） |
+| GET | `/` | React Web 聊天 UI（生产环境由 FastAPI 托管 `web/dist`） |
 
 ### ChatRequest
 
@@ -490,9 +492,9 @@ SKIP_AUTO_INGEST=false
 
 - 用户注册/登录/OAuth
 - 多租户隔离
-- Web 聊天 UI（仅 REST API）
+- ~~Web 聊天 UI（仅 REST API）~~ → **已实现**：React Web UI（`web/`，`/`）
 - 法律文档实时爬取更新（仅脚本手动/CI 触发）
-- 流式 SSE 响应（后续扩展）
+- ~~流式 SSE 响应（后续扩展）~~ → **已实现**：`POST /api/v1/chat/stream`（保留 JSON `POST /api/v1/chat`）
 
 ---
 

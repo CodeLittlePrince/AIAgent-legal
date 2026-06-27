@@ -13,6 +13,7 @@ from legal_assistant.planner.router import PlanResult, classify
         ("公司拖欠工资怎么办", "legal"),
         ("上海明天会下雨吗", "weather"),
         ("请问人工智能是什么", "general"),
+        ("我如果打了人，犯法吗？会怎么样？", "legal"),
     ],
 )
 def test_rule_based_intent(msg: str, expected: str) -> None:
