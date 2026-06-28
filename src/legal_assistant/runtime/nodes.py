@@ -98,7 +98,7 @@ def make_agent_node(deps: RuntimeDeps) -> AgentNode:
     async def agent_node(state: AgentState) -> dict[str, Any]:
         llm_config = langchain_invoke_config()
         try:
-            with span("agent.tool_loop"):
+            with span("agent.create_agent"):
                 result = await run_tool_agent(
                     deps=deps,
                     llm=deps.get_llm(),

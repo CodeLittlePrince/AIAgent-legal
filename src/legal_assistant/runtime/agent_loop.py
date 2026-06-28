@@ -1,13 +1,13 @@
-"""Tool Calling Agent 执行循环。"""
+"""Tool Calling Agent（LangChain ``create_agent``）。"""
 
 from __future__ import annotations
 
 from typing import Any
 
+from langchain.agents import create_agent
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_core.runnables.config import RunnableConfig
-from langchain_core.tools import BaseTool
 
 from legal_assistant.config import settings
 from legal_assistant.knowledge.legal_qa import append_disclaimer, format_citations
@@ -42,6 +42,30 @@ def _history_to_langchain(messages: list[dict[str, Any]]) -> list[BaseMessage]:
     return converted
 
 
+def _extract_final_answer(messages: list[BaseMessage]) -> str:
+    """从 Agent 返回的消息列表中提取最终回答。"""
+    for message in reversed(messages):
+        if isinstance(message, AIMessage):
+            content = str(message.content or "").strip()
+            if content and not message.tool_calls:
+                return content
+    for message in reversed(messages):
+        if isinstance(message, AIMessage):
+            content = str(message.content or "").strip()
+            if content:
+                return content
+    return ""
+
+
+def _merge_run_config(llm_config: RunnableConfig) -> RunnableConfig:
+    """合并 Langfuse callbacks 与 Agent 步数上限。"""
+    # 每轮工具调用 ≈ agent + tools 两个图节点
+    recursion_limit = settings.agent_max_tool_rounds * 2 + 3
+    if not llm_config:
+        return {"recursion_limit": recursion_limit}
+    return {**llm_config, "recursion_limit": recursion_limit}
+
+
 async def run_tool_agent(
     *,
     deps: RuntimeDeps,
@@ -49,42 +73,23 @@ async def run_tool_agent(
     messages: list[dict[str, Any]],
     llm_config: RunnableConfig,
 ) -> dict[str, Any]:
-    """运行 Tool Calling Agent，返回与 AgentState 兼容的字段更新。"""
+    """运行 LangChain ``create_agent``，返回与 AgentState 兼容的字段更新。"""
     ctx = AgentToolContext()
     tools = build_agent_tools(deps, ctx)
-    tools_by_name: dict[str, BaseTool] = {tool.name: tool for tool in tools}
-    bound_llm = llm.bind_tools(tools)
+    agent = create_agent(
+        model=llm,
+        tools=tools,
+        system_prompt=_AGENT_SYSTEM,
+        name="legal_assistant_agent",
+    )
 
-    lc_messages: list[BaseMessage] = [
-        SystemMessage(content=_AGENT_SYSTEM),
-        *_history_to_langchain(messages),
-    ]
+    result = await agent.ainvoke(
+        {"messages": _history_to_langchain(messages)},  # type: ignore[arg-type]
+        config=_merge_run_config(llm_config),
+    )
 
-    response: AIMessage | None = None
-    for _ in range(settings.agent_max_tool_rounds):
-        response = await bound_llm.ainvoke(lc_messages, config=llm_config)
-        if not isinstance(response, AIMessage):
-            response = AIMessage(content=str(response))
-        tool_calls = response.tool_calls or []
-        if not tool_calls:
-            break
-
-        lc_messages.append(response)
-        for tool_call in tool_calls:
-            tool_name = tool_call["name"]
-            tool = tools_by_name.get(tool_name)
-            if tool is None:
-                tool_output = f"未知工具: {tool_name}"
-            else:
-                tool_output = str(await tool.ainvoke(tool_call.get("args") or {}))
-            lc_messages.append(
-                ToolMessage(content=tool_output, tool_call_id=tool_call["id"], name=tool_name)
-            )
-
-    if response is None:
-        return {"error": "Agent 未产生回复", "answer": None}
-
-    answer = str(response.content or "").strip()
+    output_messages = result.get("messages", [])
+    answer = _extract_final_answer(output_messages)
     if not answer:
         return {"error": "Agent 回复为空", "answer": None}
 

@@ -84,7 +84,6 @@ async def test_graph_legal_uses_search_tool(
     assert "六个月" in result["answer"] or "试用期" in result["answer"]
     assert result["citations"]
     mock_retriever.retrieve.assert_called_once_with("劳动合同试用期最长多久？")
-    assert mock_llm.ainvoke.await_count >= 2
     mock_memory_manager.save_turn.assert_awaited_once()
 
 
@@ -116,7 +115,7 @@ async def test_graph_weather_uses_forecast_tool(
     assert result["location"] == "北京"
     mock_weather_adapter.get_weather.assert_awaited_once_with("北京")
     mock_retriever.retrieve.assert_not_called()
-    mock_llm.bind_tools.assert_not_called()
+    assert mock_llm.bound_tools is None
 
 
 @pytest.mark.asyncio

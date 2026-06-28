@@ -2,7 +2,7 @@
 
 **混合架构：**
 - **天气**：`planner/weather_rules` 规则 → `weather` 节点直调 adapter
-- **法律 / 闲聊**：Tool Calling Agent，工具在 `tools/` 下注册
+- **法律 / 闲聊**：LangChain ``create_agent``（标准 Tool Calling 循环），工具在 `tools/` 下注册
 
 ## tools 目录
 
@@ -23,5 +23,5 @@ tools/
 ## 请求链路
 
 ```
-route → weather | agent (build_agent_tools) → save_memory
+route → weather | agent (create_agent) → save_memory
 ```

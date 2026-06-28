@@ -1,6 +1,6 @@
 """Agent 状态图的构建。
 
-START → route → weather（规则+直调工具）| agent（Tool Calling）→ save_memory → END
+START → route → weather（规则+直调工具）| agent（create_agent）→ save_memory → END
 """
 
 from __future__ import annotations
