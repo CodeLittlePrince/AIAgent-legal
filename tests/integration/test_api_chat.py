@@ -3,11 +3,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-from langchain_core.messages import AIMessage
 
 from legal_assistant.main import create_app
 from legal_assistant.runtime.nodes import RuntimeDeps
 from legal_assistant.tools.base import WeatherResult
+from tests.helpers.mock_llm import make_tool_calling_mock_llm
 
 
 @dataclass
@@ -32,9 +32,7 @@ def mock_retriever():
 
 @pytest.fixture
 def mock_llm():
-    llm = AsyncMock()
-    llm.ainvoke.return_value = AIMessage(content="试用期最长不超过六个月。")
-    return llm
+    return make_tool_calling_mock_llm()
 
 
 @pytest.fixture
@@ -102,7 +100,8 @@ def test_chat_legal_returns_citations_disclaimer_and_trace(client):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "legal"
+    assert data["tools_used"]
+    assert "search_legal_knowledge" in data["tools_used"]
     assert data["session_id"]
     assert data["trace_id"]
     assert data["citations"]
@@ -120,6 +119,7 @@ def test_chat_weather_routes_without_citations(client):
     assert response.status_code == 200
     data = response.json()
     assert data["intent"] == "weather"
+    assert "get_weather_forecast" in data["tools_used"]
     assert data["session_id"] == "session-weather-1"
     assert data["citations"] == []
     assert data["disclaimer"] is None
@@ -142,7 +142,7 @@ def test_chat_general_routes_without_citations(client):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["intent"] == "general"
+    assert data["tools_used"] == []
     assert data["citations"] == []
     assert data["disclaimer"] is None
 
@@ -158,7 +158,6 @@ def test_chat_persists_turn_via_graph(client, mock_memory_manager):
     call_kwargs = mock_memory_manager.save_turn.await_args.kwargs
     assert call_kwargs["session_id"] == "session-save-1"
     assert call_kwargs["user_msg"] == "你好"
-    assert call_kwargs["intent"] == "general"
 
 
 def test_get_session_returns_messages(client, mock_memory_manager):
@@ -231,11 +230,10 @@ def test_chat_stream_returns_sse_events(client):
         body = "".join(response.iter_text())
 
     assert "event: session" in body
-    assert "event: intent" in body
+    assert "event: tools" in body
     assert "event: status" in body
     assert "event: delta" in body
     assert "event: done" in body
-    assert "general" in body
 
 
 def test_chat_stream_legal_includes_citations(client):
@@ -249,5 +247,5 @@ def test_chat_stream_legal_includes_citations(client):
 
     assert "event: citations" in body
     assert "event: disclaimer" in body
-    assert "legal" in body
+    assert "search_legal_knowledge" in body
     assert body.index("event: citations") < body.index("event: delta")

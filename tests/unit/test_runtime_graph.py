@@ -1,9 +1,10 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from langchain_core.messages import AIMessage
 
 from dataclasses import dataclass
+
+from tests.helpers.mock_llm import make_tool_calling_mock_llm
 
 
 @dataclass
@@ -32,9 +33,7 @@ def mock_retriever():
 
 @pytest.fixture
 def mock_llm():
-    llm = AsyncMock()
-    llm.ainvoke.return_value = AIMessage(content="试用期最长不超过六个月。")
-    return llm
+    return make_tool_calling_mock_llm()
 
 
 @pytest.fixture
@@ -58,7 +57,7 @@ def mock_memory_manager():
 
 
 @pytest.mark.asyncio
-async def test_graph_routes_legal_intent(
+async def test_graph_legal_uses_search_tool(
     mock_retriever,
     mock_llm,
     mock_weather_adapter,
@@ -79,29 +78,23 @@ async def test_graph_routes_legal_intent(
         }
     )
 
-    assert result["intent"] == "legal"
+    assert "search_legal_knowledge" in (result.get("tools_used") or [])
+    assert result.get("intent") == "legal"
     assert result["answer"] is not None
     assert "六个月" in result["answer"] or "试用期" in result["answer"]
     assert result["citations"]
-    assert result["citations"][0]["source"] == "中华人民共和国劳动法.md"
-    assert result["retrieved_docs"]
     mock_retriever.retrieve.assert_called_once_with("劳动合同试用期最长多久？")
-    mock_llm.ainvoke.assert_called_once()
+    assert mock_llm.ainvoke.await_count >= 2
     mock_memory_manager.save_turn.assert_awaited_once()
-    save_kwargs = mock_memory_manager.save_turn.await_args.kwargs
-    assert save_kwargs["session_id"] == "session-legal-1"
-    assert save_kwargs["intent"] == "legal"
 
 
 @pytest.mark.asyncio
-async def test_graph_routes_weather_intent(
+async def test_graph_weather_uses_forecast_tool(
     mock_retriever,
     mock_llm,
     mock_weather_adapter,
     mock_memory_manager,
 ):
-    mock_llm.ainvoke.return_value = AIMessage(content="北京今天晴，22度。")
-
     deps = RuntimeDeps(
         llm=mock_llm,
         retriever=mock_retriever,
@@ -118,22 +111,21 @@ async def test_graph_routes_weather_intent(
     )
 
     assert result["intent"] == "weather"
+    assert result["route"] == "weather"
+    assert "get_weather_forecast" in (result.get("tools_used") or [])
     assert result["location"] == "北京"
-    assert result["tool_result"] is not None
-    assert result["tool_result"].location == "北京"
     mock_weather_adapter.get_weather.assert_awaited_once_with("北京")
     mock_retriever.retrieve.assert_not_called()
+    mock_llm.bind_tools.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_graph_routes_general_intent(
+async def test_graph_general_no_tools(
     mock_retriever,
     mock_llm,
     mock_weather_adapter,
     mock_memory_manager,
 ):
-    mock_llm.ainvoke.return_value = AIMessage(content="你好，我是法律助手。")
-
     deps = RuntimeDeps(
         llm=mock_llm,
         retriever=mock_retriever,
@@ -149,7 +141,7 @@ async def test_graph_routes_general_intent(
         }
     )
 
-    assert result["intent"] == "general"
-    assert result["answer"] == "你好，我是法律助手。"
+    assert result.get("tools_used") in (None, [])
+    assert "法律助手" in (result.get("answer") or "")
     mock_retriever.retrieve.assert_not_called()
     mock_weather_adapter.get_weather.assert_not_called()

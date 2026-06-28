@@ -6,7 +6,7 @@ import {
   storeSessionId,
   streamChat,
 } from "../api/chat";
-import type { ChatMessage, Citation, Intent } from "../types";
+import type { ChatMessage, Citation } from "../types";
 import { ChatInput } from "./ChatInput";
 import { MessageBubble } from "./MessageBubble";
 
@@ -69,10 +69,10 @@ export function ChatPage() {
             setSessionId(nextSessionId);
             storeSessionId(nextSessionId);
           },
-          onIntent: (intent: Intent) => {
+          onTools: (toolsUsed: string[]) => {
             setMessages((prev) =>
               prev.map((item) =>
-                item.id === assistantId ? { ...item, intent, status: null } : item,
+                item.id === assistantId ? { ...item, toolsUsed, status: null } : item,
               ),
             );
           },

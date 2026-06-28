@@ -8,11 +8,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
-from langchain_core.messages import AIMessage
 
 from legal_assistant.main import create_app
 from legal_assistant.memory.models import Message, Session
 from legal_assistant.runtime.nodes import RuntimeDeps
+from tests.helpers.mock_llm import make_tool_calling_mock_llm
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCKER_COMPOSE = ROOT / "docker-compose.yml"
@@ -33,7 +33,7 @@ def _api_route_paths(app) -> list[str]:
 
 
 def test_no_user_auth_api_routes():
-    app = create_app(skip_db_init=True, skip_auto_ingest=True, mount_web_ui=False)
+    app = create_app(skip_db_init=True, skip_auto_ingest=True, skip_rag_warmup=True, mount_web_ui=False)
     api_paths = _api_route_paths(app)
 
     for path in api_paths:
@@ -74,8 +74,7 @@ def test_sync_chat_still_returns_json():
     manager = AsyncMock()
     manager.load = AsyncMock(return_value=[])
     manager.save_turn = AsyncMock(return_value=None)
-    llm = AsyncMock()
-    llm.ainvoke.return_value = AIMessage(content="你好，我是法律助手。")
+    llm = make_tool_calling_mock_llm()
     deps = RuntimeDeps(llm=llm, memory_manager=manager)
     app = create_app(
         memory_manager=manager,

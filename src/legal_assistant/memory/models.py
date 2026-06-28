@@ -37,7 +37,7 @@ class Session(Base):
 class Message(Base):
     """单条对话消息，对应数据库表 ``messages``。
 
-    ``role`` 通常为 ``user`` 或 ``assistant``；``intent`` 与 ``metadata_`` 为可选扩展字段。
+    ``role`` 通常为 ``user`` 或 ``assistant``；``metadata_`` 为可选扩展字段。
     """
 
     __tablename__ = "messages"
@@ -49,7 +49,6 @@ class Message(Base):
     )
     role: Mapped[str] = mapped_column(String(16))
     content: Mapped[str] = mapped_column(Text)
-    intent: Mapped[str | None] = mapped_column(String(16), nullable=True)
     # Python 属性名 metadata_ 避免与 SQLAlchemy 保留名冲突；数据库列名仍为 metadata
     metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -81,18 +81,20 @@ def extract_user_message(trace: dict[str, Any], score: dict[str, Any]) -> str | 
     return _coerce_message(score.get("comment"))
 
 
-def infer_intent(trace: dict[str, Any]) -> str:
+def infer_tools_used(trace: dict[str, Any]) -> list[str]:
     trace_output = trace.get("output")
     if isinstance(trace_output, dict):
-        intent = trace_output.get("intent")
-        if intent:
-            return str(intent)
+        tools = trace_output.get("tools_used")
+        if isinstance(tools, list):
+            return [str(item) for item in tools if item]
 
     metadata = trace.get("metadata") or {}
-    if isinstance(metadata, dict) and metadata.get("intent"):
-        return str(metadata["intent"])
+    if isinstance(metadata, dict):
+        raw = metadata.get("tools_used")
+        if isinstance(raw, str) and raw != "none":
+            return [part for part in raw.split(",") if part]
 
-    return "general"
+    return []
 
 
 def build_task_from_trace(
@@ -104,14 +106,18 @@ def build_task_from_trace(
     if not user_message:
         return None
 
-    intent = infer_intent(trace)
+    tools_used = infer_tools_used(trace)
     task_id = f"exported_{trace_id.replace('-', '')[:12]}"
-    expect: dict[str, Any] = {"intent": intent, "task_success": True}
-    if intent == "legal":
+    expect: dict[str, Any] = {"task_success": True}
+    if "search_legal_knowledge" in tools_used:
+        expect["tools_contains"] = "search_legal_knowledge"
         expect["citations"] = True
         expect["disclaimer"] = True
-    elif intent == "weather":
+    elif "get_weather_forecast" in tools_used:
+        expect["tools_contains"] = "get_weather_forecast"
         expect["tool_success"] = True
+    elif not tools_used:
+        expect["tools_empty"] = True
 
     comment = _coerce_message(score.get("comment"))
     name = f"导出低分用例 ({trace_id[:8]})"

@@ -7,10 +7,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastapi.testclient import TestClient
-from langchain_core.messages import AIMessage
 
 from legal_assistant.main import create_app
 from legal_assistant.runtime.nodes import RuntimeDeps
+from tests.helpers.mock_llm import make_tool_calling_mock_llm
 
 WEB_DIST = Path(__file__).resolve().parents[2] / "web" / "dist"
 
@@ -20,8 +20,7 @@ def client():
     manager = AsyncMock()
     manager.load = AsyncMock(return_value=[])
     manager.save_turn = AsyncMock(return_value=None)
-    llm = AsyncMock()
-    llm.ainvoke.return_value = AIMessage(content="你好，我是法律助手。")
+    llm = make_tool_calling_mock_llm()
     deps = RuntimeDeps(llm=llm, memory_manager=manager)
     app = create_app(
         memory_manager=manager,

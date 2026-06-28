@@ -1,14 +1,13 @@
-import type { ChatMessage, Citation, Intent } from "../types";
+import type { ChatMessage, Citation } from "../types";
 import { MarkdownContent } from "./MarkdownContent";
 
 interface MessageBubbleProps {
   message: ChatMessage;
 }
 
-const intentLabels: Record<Intent, string> = {
-  legal: "法律咨询",
-  weather: "天气查询",
-  general: "通用对话",
+const toolLabels: Record<string, string> = {
+  search_legal_knowledge: "法律检索",
+  get_weather_forecast: "天气查询",
 };
 
 function formatSourceName(source: string): string {
@@ -18,16 +17,22 @@ function formatSourceName(source: string): string {
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const showStatus = !isUser && message.streaming && !message.content && message.status;
-  const isLegalWithCitations =
-    !isUser && message.intent === "legal" && message.citations && message.citations.length > 0;
+  const showCitations =
+    !isUser && message.citations && message.citations.length > 0;
 
   return (
     <article className={`message ${isUser ? "message-user" : "message-assistant"}`}>
-      {!isUser && message.intent && (
-        <span className="intent-badge">{intentLabels[message.intent]}</span>
+      {!isUser && message.toolsUsed && message.toolsUsed.length > 0 && (
+        <div className="tool-badges">
+          {message.toolsUsed.map((tool) => (
+            <span key={tool} className="tool-badge">
+              {toolLabels[tool] ?? tool}
+            </span>
+          ))}
+        </div>
       )}
 
-      {isLegalWithCitations && (
+      {showCitations && (
         <CitationPanel citations={message.citations!} />
       )}
 

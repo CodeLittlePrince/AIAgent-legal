@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
-# 聊天请求总数，按意图（legal/weather/general）与状态（success/error 等）分桶
+# 聊天请求总数，按本轮调用的工具组合与状态分桶
 CHAT_REQUESTS_TOTAL = Counter(
     "chat_requests_total",
     "Total chat requests",
-    ["intent", "status"],
+    ["tools", "status"],
 )
 
 # 单次聊天请求端到端延迟（秒），Histogram 自动计算分位数
@@ -42,14 +42,14 @@ llm_tokens_total = LLM_TOKENS_TOTAL
 tool_calls_total = TOOL_CALLS_TOTAL
 
 
-def record_chat_request(intent: str, status: str) -> None:
+def record_chat_request(tools_label: str, status: str) -> None:
     """将一次聊天请求计入 ``CHAT_REQUESTS_TOTAL``。
 
     Args:
-        intent: 路由意图，如 ``"legal"``、``"weather"``、``"general"``。
+        tools_label: 工具组合标签，如 ``"search_legal_knowledge"`` 或 ``"none"``。
         status: 处理结果状态，如 ``"success"``、``"error"``。
     """
-    CHAT_REQUESTS_TOTAL.labels(intent=intent, status=status).inc()
+    CHAT_REQUESTS_TOTAL.labels(tools=tools_label, status=status).inc()
 
 
 def record_chat_latency(seconds: float) -> None:

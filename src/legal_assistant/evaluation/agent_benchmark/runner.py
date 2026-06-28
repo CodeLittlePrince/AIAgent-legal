@@ -33,7 +33,7 @@ class TurnResult:
         turn_index: 在本任务中的轮次序号，从 0 开始。
         user_message: 该轮发送给 API 的用户消息。
         status_code: HTTP 状态码（或 chat_fn 模拟返回的状态码）。
-        intent: API 识别的意图（如 legal、weather 等），失败时可能为 None。
+        tools_used: API 返回的本轮 tools_used 列表。
         answer: 助手回答正文。
         citations: 引用列表，每项通常为含 source 等键的字典。
         disclaimer: 免责声明文本。
@@ -47,7 +47,7 @@ class TurnResult:
     turn_index: int
     user_message: str
     status_code: int
-    intent: str | None = None
+    tools_used: list[str] = field(default_factory=list)
     answer: str | None = None
     citations: list[dict[str, str]] = field(default_factory=list)
     disclaimer: str | None = None
@@ -214,7 +214,7 @@ class BenchmarkRunner:
                 turn_index=index,
                 user_message=user_message,
                 status_code=int(raw.get("status_code", 500)),
-                intent=raw.get("intent"),
+                tools_used=list(raw.get("tools_used") or []),
                 answer=raw.get("answer"),
                 citations=list(raw.get("citations") or []),
                 disclaimer=raw.get("disclaimer"),
@@ -247,10 +247,11 @@ def _evaluate_turn(turn: TurnResult, prior_turns: list[TurnResult]) -> bool:
     """根据 ``turn.expect`` 校验单轮是否满足期望，结果写入 ``turn.checks``。
 
     支持的 expect 键包括但不限于：
-    - ``intent``: 期望意图字符串完全匹配
+    - ``tools_contains``: 期望调用了指定工具名
+    - ``tools_empty``: True 表示本轮不应调用任何工具
     - ``citations``: True/False 表示是否应有引用
     - ``disclaimer``: True/False 表示是否应有免责声明
-    - ``tool_success``: 天气等工具类意图是否调用成功
+    - ``tool_success``: 天气等工具类任务是否调用成功
     - ``answer_contains_any``: 回答中是否包含任一关键词（不区分大小写）
     - ``memory_coherence`` + ``memory_keywords_any`` + ``memory_context_from_turn``: 记忆连贯性
 
@@ -269,8 +270,12 @@ def _evaluate_turn(turn: TurnResult, prior_turns: list[TurnResult]) -> bool:
 
     checks: dict[str, bool] = {}
 
-    if "intent" in expect:
-        checks["intent"] = turn.intent == expect["intent"]
+    expected_tool = expect.get("tools_contains")
+    if isinstance(expected_tool, str):
+        checks["tools_contains"] = expected_tool in turn.tools_used
+
+    if expect.get("tools_empty") is True:
+        checks["tools_empty"] = len(turn.tools_used) == 0
 
     if expect.get("citations") is True:
         checks["citations"] = len(turn.citations) > 0
@@ -283,10 +288,9 @@ def _evaluate_turn(turn: TurnResult, prior_turns: list[TurnResult]) -> bool:
         checks["disclaimer"] = turn.disclaimer is None
 
     if expect.get("tool_success") is True:
-        # 天气工具成功：200 + intent=weather + 非空回答
         checks["tool_success"] = (
             turn.status_code == 200
-            and turn.intent == "weather"
+            and "get_weather_forecast" in turn.tools_used
             and bool(turn.answer)
         )
 

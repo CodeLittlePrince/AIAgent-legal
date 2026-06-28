@@ -27,6 +27,7 @@ async def test_iter_chat_sse_events_streams_with_delay():
         session_id="s1",
         trace_id="t1",
         intent="legal",
+        tools_used=["search_legal_knowledge"],
         answer="你好",
         citations=[Citation(source="劳动法.md", excerpt="试用期…")],
         disclaimer="免责声明",

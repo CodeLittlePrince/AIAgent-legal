@@ -1,10 +1,8 @@
-"""工具层公共接口。
+"""工具层：外部能力适配器 + Agent StructuredTool。
 
-本包封装外部能力（如天气查询）的适配器与注册逻辑，
-上层 runtime 节点通过此处导出的类型与工厂函数获取具体实现。
+具体 tool 请从子模块导入，例如 ``legal_assistant.tools.builder.build_agent_tools``。
 """
 
-from legal_assistant.tools.base import WeatherAdapter, WeatherResult
-from legal_assistant.tools.registry import get_weather_adapter
+from legal_assistant.tools.constants import LEGAL_SEARCH_TOOL, WEATHER_FORECAST_TOOL
 
-__all__ = ["WeatherAdapter", "WeatherResult", "get_weather_adapter"]
+__all__ = ["LEGAL_SEARCH_TOOL", "WEATHER_FORECAST_TOOL"]

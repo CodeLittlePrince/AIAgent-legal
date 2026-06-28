@@ -40,7 +40,7 @@ def _string_metadata(**fields: Any) -> dict[str, str]:
 
 def update_trace_output(
     *,
-    intent: str,
+    tools_used: list[str] | None = None,
     answer: str | None = None,
     citations_count: int = 0,
     error: str | None = None,
@@ -54,15 +54,16 @@ def update_trace_output(
     if answer and len(answer) > _TRACE_OUTPUT_PREVIEW_LEN:
         preview = answer[:_TRACE_OUTPUT_PREVIEW_LEN] + "…"
 
+    tools = tools_used or []
     client.update_current_span(
         output={
-            "intent": intent,
+            "tools_used": tools,
             "answer_preview": preview,
             "citations_count": citations_count,
             "error": error,
         },
         metadata=_string_metadata(
-            intent=intent,
+            tools_used=",".join(tools) if tools else "none",
             citations_count=citations_count,
             has_error=bool(error),
         ),

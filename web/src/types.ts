@@ -1,5 +1,3 @@
-export type Intent = "legal" | "weather" | "general";
-
 export interface Citation {
   source: string;
   excerpt: string;
@@ -9,7 +7,7 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  intent?: Intent;
+  toolsUsed?: string[];
   citations?: Citation[];
   disclaimer?: string | null;
   streaming?: boolean;
@@ -18,7 +16,7 @@ export interface ChatMessage {
 
 export interface StreamHandlers {
   onSession: (sessionId: string, traceId: string) => void;
-  onIntent: (intent: Intent) => void;
+  onTools: (toolsUsed: string[]) => void;
   onStatus: (message: string) => void;
   onDelta: (content: string) => void;
   onCitations: (citations: Citation[]) => void;

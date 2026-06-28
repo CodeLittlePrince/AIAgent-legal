@@ -72,7 +72,7 @@ async def chat(request_body: ChatRequest, request: Request) -> ChatResponse:
         request: FastAPI 请求对象，用于获取应用服务。
 
     Returns:
-        包含回答、意图、引用和 trace_id 的 ChatResponse。
+        包含回答、tools_used、引用和 trace_id 的 ChatResponse。
     """
     services = get_services(request)
 
@@ -93,6 +93,7 @@ async def chat(request_body: ChatRequest, request: Request) -> ChatResponse:
     return ChatResponse(
         session_id=execution.session_id,
         intent=execution.intent,
+        tools_used=execution.tools_used,
         answer=execution.answer,
         citations=execution.citations,
         disclaimer=execution.disclaimer,

@@ -15,6 +15,7 @@ from legal_assistant.evaluation.agent_benchmark.runner import BenchmarkRunner
 from legal_assistant.main import create_app
 from legal_assistant.runtime.nodes import RuntimeDeps
 from legal_assistant.tools.base import WeatherResult
+from tests.helpers.mock_llm import make_tool_calling_mock_llm
 
 
 @dataclass
@@ -39,26 +40,7 @@ def mock_retriever():
 
 @pytest.fixture
 def mock_llm():
-    llm = AsyncMock()
-
-    async def _ainvoke(messages, *args, **kwargs):
-        if isinstance(messages, list):
-            last = messages[-1]
-            content = getattr(last, "content", str(last))
-        else:
-            content = str(messages)
-
-        if any(keyword in content for keyword in ("试用期", "劳动", "法律")):
-            return AIMessage(content="试用期最长不超过六个月。")
-        if any(keyword in content for keyword in ("天气", "气温", "明天", "预报")):
-            location = "上海" if "上海" in content else "北京"
-            if "明天" in content:
-                return AIMessage(content=f"{location}明天多云，气温18到25度，适合出行。")
-            return AIMessage(content=f"{location}今天晴，气温22度，未来三天以晴为主。")
-        return AIMessage(content="你好，我是智能法律助手，可以解答法律、天气和一般问题。")
-
-    llm.ainvoke.side_effect = _ainvoke
-    return llm
+    return make_tool_calling_mock_llm()
 
 
 @pytest.fixture
@@ -82,7 +64,7 @@ def mock_memory_manager():
     async def load(session_id: str):
         return list(stored.get(session_id, []))
 
-    async def save_turn(session_id: str, user_msg: str, assistant_msg: str, intent: str | None = None):
+    async def save_turn(session_id: str, user_msg: str, assistant_msg: str):
         stored.setdefault(session_id, []).append({"role": "user", "content": user_msg})
         stored.setdefault(session_id, []).append({"role": "assistant", "content": assistant_msg})
 
@@ -153,16 +135,16 @@ def test_benchmark_metrics_and_report(benchmark_client, tmp_path):
 
     assert report.task_count == len(results)
     assert 0.0 <= report.summary["task_success_rate"] <= 1.0
-    assert "intent_accuracy" in report.summary
+    assert "tool_selection_accuracy" in report.summary
     assert "overall_score" in report.summary
-    assert report.by_intent
+    assert report.by_tool
 
     report_path = tmp_path / "agent_benchmark_report.json"
     assert report_path.exists()
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     assert payload["task_count"] == len(results)
     assert "summary" in payload
-    assert "by_intent" in payload
+    assert "by_tool" in payload
 
 
 @pytest.mark.benchmark
@@ -185,7 +167,7 @@ def test_single_turn_legal_task_passes(benchmark_client):
     result = runner.run_task(tasks["single_turn_legal"])
 
     assert result.task_success
-    assert result.turns[0].intent == "legal"
+    assert "search_legal_knowledge" in result.turns[0].tools_used
     assert result.turns[0].citations
     assert result.turns[0].disclaimer
 

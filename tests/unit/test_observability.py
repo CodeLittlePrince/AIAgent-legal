@@ -82,16 +82,16 @@ def test_trace_chat_with_langfuse_enabled(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def test_span_context_manager_noop_when_langfuse_disabled() -> None:
-    with span("planner"):
+    with span("agent.tool_loop"):
         pass
 
 
 def test_span_decorator_noop_when_langfuse_disabled() -> None:
-    @span("planner")
-    def classify() -> str:
-        return "legal"
+    @span("agent.tool_loop")
+    def run_agent() -> str:
+        return "ok"
 
-    assert classify() == "legal"
+    assert run_agent() == "ok"
 
 
 @pytest.mark.asyncio
@@ -104,7 +104,7 @@ async def test_span_decorator_async_noop_when_langfuse_disabled() -> None:
 
 
 def test_prometheus_metrics_defined() -> None:
-    CHAT_REQUESTS_TOTAL.labels(intent="legal", status="success").inc()
+    CHAT_REQUESTS_TOTAL.labels(tools="search_legal_knowledge", status="success").inc()
     CHAT_LATENCY_SECONDS.observe(0.12)
     LLM_TOKENS_TOTAL.labels(model="deepseek-chat", direction="input").inc(42)
     TOOL_CALLS_TOTAL.labels(tool="weather", status="success").inc()

@@ -20,8 +20,9 @@ COPY alembic.ini .
 
 RUN pip install --no-cache-dir -e .
 
-# Pre-download embedding model so first API startup does not block on HuggingFace.
+# Pre-download embedding + rerank models so runtime does not block on HuggingFace.
 RUN python -c "from llama_index.embeddings.huggingface import HuggingFaceEmbedding; HuggingFaceEmbedding(model_name='BAAI/bge-small-zh-v1.5')"
+RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('BAAI/bge-reranker-base')"
 
 COPY profile/ profile/
 COPY --from=web-builder /web/dist /app/web/dist

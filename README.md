@@ -1,6 +1,6 @@
 # Intelligent AI Assistant (Legal Assistant)
 
-Industrial-grade REST API for multi-intent conversational AI: **Chinese legal Q&A** (RAG over static legal documents), **weather queries** (pluggable providers), and **general chat**. Built with LangGraph orchestration, LlamaIndex + Chroma retrieval, Redis/PostgreSQL memory, and Langfuse observability.
+Industrial-grade REST API for conversational AI: **Chinese legal Q&A** (RAG), **weather queries**, and **general chat** via a unified **Tool Calling Agent** (LangGraph). LlamaIndex + Chroma retrieval, Redis/PostgreSQL memory, Langfuse observability.
 
 ## Prerequisites
 
@@ -66,7 +66,7 @@ curl -s -X POST http://localhost:8000/api/v1/chat \
   -d '{"message":"劳动合同试用期最长多久？"}' | jq .
 ```
 
-Expected: `intent=legal`, non-empty `citations`, `disclaimer` present.
+Expected: `tools_used` includes `search_legal_knowledge`, non-empty `citations`, `disclaimer` present.
 
 ### Weather chat
 
@@ -76,7 +76,7 @@ curl -s -X POST http://localhost:8000/api/v1/chat \
   -d '{"message":"上海今天天气怎么样？"}' | jq .
 ```
 
-Expected: `intent=weather`, answer mentions temperature or conditions.
+Expected: `tools_used` includes `get_weather_forecast`, answer mentions temperature or conditions.
 
 ### General chat
 
@@ -86,7 +86,7 @@ curl -s -X POST http://localhost:8000/api/v1/chat \
   -d '{"message":"你好，介绍一下你自己"}' | jq .
 ```
 
-Expected: `intent=general`.
+Expected: `tools_used` is empty (`[]`).
 
 ### Streaming chat (SSE)
 
@@ -97,7 +97,7 @@ curl -N -X POST http://localhost:8000/api/v1/chat/stream \
   -d '{"message":"你好"}'
 ```
 
-Events: `session` → `intent` → `delta` (answer chunks) → `citations` / `disclaimer` → `done`.
+Events: `session` → `tools` → `delta` (answer chunks) → `citations` / `disclaimer` → `done`.
 
 The synchronous JSON endpoint `POST /api/v1/chat` remains available for clients that do not use SSE.
 
@@ -226,8 +226,7 @@ Create a project in Langfuse, copy the public/secret keys into `.env` (`LANGFUSE
 | Module | Path | Responsibility |
 |--------|------|----------------|
 | **API** | `src/legal_assistant/api/` | REST endpoints (`/chat`, sessions, health, metrics) |
-| **Planner** | `src/legal_assistant/planner/` | Intent classification and routing (legal / weather / general) |
-| **Runtime** | `src/legal_assistant/runtime/` | LangGraph StateGraph agent execution |
+| **Runtime / Agent** | `src/legal_assistant/runtime/`, `tools/builder.py` | LangGraph Tool Calling loop |
 | **Memory** | `src/legal_assistant/memory/` | Redis hot cache + PostgreSQL persistence |
 | **Knowledge** | `src/legal_assistant/knowledge/` | Legal doc ingest, Chroma RAG, retriever |
 | **Tools** | `src/legal_assistant/tools/` | Pluggable weather adapters (Open-Meteo, QWeather, Gaode) |

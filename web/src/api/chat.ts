@@ -1,4 +1,4 @@
-import type { Citation, Intent, StreamHandlers } from "../types";
+import type { Citation, StreamHandlers } from "../types";
 
 const SESSION_KEY = "legal_assistant_session_id";
 
@@ -39,8 +39,13 @@ function dispatchEvent(event: string, payload: Record<string, unknown>, handlers
     case "session":
       handlers.onSession(String(payload.session_id), String(payload.trace_id));
       break;
+    case "tools":
+      handlers.onTools((payload.tools_used as string[]) ?? []);
+      break;
     case "intent":
-      handlers.onIntent(payload.intent as Intent);
+      if (Array.isArray(payload.tools_used)) {
+        handlers.onTools(payload.tools_used as string[]);
+      }
       break;
     case "status":
       handlers.onStatus(String(payload.message ?? ""));

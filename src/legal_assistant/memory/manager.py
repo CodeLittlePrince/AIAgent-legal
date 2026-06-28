@@ -52,15 +52,11 @@ class MemoryManager:
         session_id: str,
         user_msg: str,
         assistant_msg: str,
-        intent: str | None = None,
     ) -> None:
-        """持久化一轮完整对话（用户消息 + 助手回复），并更新 Redis 缓存。
-
-        缓存中仅保留最近 ``max_history_turns`` 轮，控制上下文长度与 Redis 占用。
-        """
+        """持久化一轮完整对话（用户消息 + 助手回复），并更新 Redis 缓存。"""
         await self.postgres.create_session_if_missing(session_id)
-        await self.postgres.append_message(session_id, "user", user_msg, intent)
-        await self.postgres.append_message(session_id, "assistant", assistant_msg, intent)
+        await self.postgres.append_message(session_id, "user", user_msg)
+        await self.postgres.append_message(session_id, "assistant", assistant_msg)
 
         messages = await self.postgres.get_messages(session_id)
         truncated = await self.truncate(messages, settings.max_history_turns)

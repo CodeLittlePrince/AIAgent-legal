@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-chat"
 
+    # ---------- Agent ----------
+    agent_max_tool_rounds: int = 4  # Tool Calling 每轮最多迭代次数
+
     # ---------- 数据存储 ----------
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/legal_assistant"
     redis_url: str = "redis://localhost:6379/0"
@@ -35,6 +38,13 @@ class Settings(BaseSettings):
     # ---------- 文本嵌入模型（用于法律文档检索） ----------
     embedding_provider: str = "local"
     embedding_model: str = "BAAI/bge-small-zh-v1.5"
+
+    # ---------- RAG 检索（粗筛 + rerank） ----------
+    rag_coarse_top_k: int = 20  # 向量粗筛召回条数
+    rag_final_top_k: int = 5  # rerank 后返回条数
+    rag_rerank_model: str = "BAAI/bge-reranker-base"
+    rag_rerank_score_threshold: float | None = None  # 精排最低分，None 表示仅按 top_k 截断
+    rag_warmup_on_startup: bool = True  # 启动时预加载 RAG 模型，避免首次检索阻塞
 
     # ---------- 天气工具 ----------
     weather_provider: str = "open_meteo"  # 默认使用免费的 Open-Meteo API

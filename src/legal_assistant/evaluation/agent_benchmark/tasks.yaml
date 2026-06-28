@@ -1,5 +1,5 @@
 version: "1.0"
-description: Agent E2E benchmark tasks covering single-turn, multi-turn, intent switch, and degradation.
+description: Agent E2E benchmark — Tool Calling stack (no intent routing).
 
 tasks:
   - id: single_turn_legal
@@ -8,7 +8,7 @@ tasks:
     turns:
       - user: "劳动合同试用期最长多久？"
         expect:
-          intent: legal
+          tools_contains: search_legal_knowledge
           citations: true
           disclaimer: true
           answer_contains_any: ["试用期", "六个月", "6个月"]
@@ -20,7 +20,7 @@ tasks:
     turns:
       - user: "北京今天天气怎么样？"
         expect:
-          intent: weather
+          tools_contains: get_weather_forecast
           tool_success: true
           answer_contains_any: ["北京", "天气", "温度", "气温", "晴"]
           task_success: true
@@ -31,7 +31,7 @@ tasks:
     turns:
       - user: "你好，介绍一下你自己"
         expect:
-          intent: general
+          tools_empty: true
           citations: false
           disclaimer: false
           task_success: true
@@ -42,28 +42,28 @@ tasks:
     turns:
       - user: "上海今天天气怎么样？"
         expect:
-          intent: weather
+          tools_contains: get_weather_forecast
           tool_success: true
           task_success: true
       - user: "那上海明天天气呢？"
         expect:
-          intent: weather
+          tools_contains: get_weather_forecast
           memory_coherence: true
           memory_context_from_turn: 0
           memory_keywords_any: ["上海", "明天", "预报", "天气", "气温"]
           task_success: true
 
-  - id: intent_switch_general_to_legal
-    name: 跨 intent 切换 general → legal
-    category: intent_switch
+  - id: switch_general_to_legal
+    name: 闲聊后转法律咨询
+    category: multi_turn
     turns:
       - user: "你好"
         expect:
-          intent: general
+          tools_empty: true
           task_success: true
       - user: "劳动合同试用期最长多久？"
         expect:
-          intent: legal
+          tools_contains: search_legal_knowledge
           citations: true
           disclaimer: true
           task_success: true
@@ -74,7 +74,6 @@ tasks:
     turns:
       - user: "天气和法律问题"
         expect:
-          intent: general
           task_success: true
 
   - id: weather_invalid_location
@@ -83,5 +82,5 @@ tasks:
     turns:
       - user: "火星今天天气怎么样？"
         expect:
-          intent: weather
+          tools_contains: get_weather_forecast
           task_success: true

@@ -18,8 +18,8 @@ from legal_assistant.api.routes import AppServices, router
 from legal_assistant.config import settings
 from legal_assistant.memory.database import Base, engine
 from legal_assistant.memory.manager import MemoryManager
+from legal_assistant.runtime.deps import RuntimeDeps
 from legal_assistant.runtime.graph import build_agent_graph
-from legal_assistant.runtime.nodes import RuntimeDeps
 
 # 前端构建产物目录：main.py 位于 src/legal_assistant/，向上两级到项目根，再进入 web/dist
 WEB_DIST = Path(__file__).resolve().parents[2] / "web" / "dist"
@@ -32,6 +32,22 @@ async def _init_database() -> None:
     """
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
+
+
+async def _maybe_warmup_rag(deps: RuntimeDeps) -> None:
+    """启动时预加载 embedding + rerank 模型，避免首次检索才下载 HuggingFace 权重。"""
+    if not settings.rag_warmup_on_startup:
+        return
+
+    try:
+        import asyncio
+
+        from legal_assistant.knowledge.warmup import warmup_rag_models
+
+        deps.retriever = await asyncio.to_thread(warmup_rag_models)
+    except Exception:
+        # Chroma 未就绪或网络异常时不阻断服务启动
+        return
 
 
 async def _maybe_auto_ingest() -> None:
@@ -98,6 +114,7 @@ def create_app(
     runtime_deps: RuntimeDeps | None = None,
     skip_db_init: bool = False,
     skip_auto_ingest: bool = False,
+    skip_rag_warmup: bool = False,
     mount_web_ui: bool = True,
 ) -> FastAPI:
     """创建并配置 FastAPI 应用实例。
@@ -109,6 +126,7 @@ def create_app(
         runtime_deps: Agent 运行时依赖（LLM、工具等）；默认基于 memory_manager 构建。
         skip_db_init: 为 True 时跳过数据库表初始化（测试常用）。
         skip_auto_ingest: 为 True 时跳过自动法律文档入库。
+        skip_rag_warmup: 为 True 时跳过 RAG 模型预热（测试常用）。
         mount_web_ui: 为 True 时挂载 web/dist 静态前端。
 
     Returns:
@@ -126,6 +144,8 @@ def create_app(
         deps = runtime_deps or RuntimeDeps(memory_manager=manager)
         if deps.memory_manager is None:
             deps.memory_manager = manager
+        if not skip_rag_warmup and runtime_deps is None:
+            await _maybe_warmup_rag(deps)
         # 构建 LangGraph 状态图，作为对话 Agent 的执行引擎
         graph = build_agent_graph(deps)
 

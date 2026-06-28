@@ -64,17 +64,17 @@ async def test_save_and_load_structure(
     mock_postgres: MagicMock,
 ) -> None:
     pg_messages = [
-        {"role": "user", "content": "hello", "intent": "general"},
-        {"role": "assistant", "content": "hi", "intent": "general"},
+        {"role": "user", "content": "hello"},
+        {"role": "assistant", "content": "hi"},
     ]
     mock_postgres.get_messages.return_value = pg_messages
 
-    await manager.save_turn(session_id, "hello", "hi", "general")
+    await manager.save_turn(session_id, "hello", "hi")
 
     mock_postgres.create_session_if_missing.assert_called_once_with(session_id)
     assert mock_postgres.append_message.call_count == 2
-    mock_postgres.append_message.assert_any_call(session_id, "user", "hello", "general")
-    mock_postgres.append_message.assert_any_call(session_id, "assistant", "hi", "general")
+    mock_postgres.append_message.assert_any_call(session_id, "user", "hello")
+    mock_postgres.append_message.assert_any_call(session_id, "assistant", "hi")
     mock_redis.set_messages.assert_called_once_with(session_id, pg_messages)
 
     mock_redis.get_messages.return_value = None
