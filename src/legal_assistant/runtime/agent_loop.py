@@ -7,7 +7,7 @@ from typing import Any
 from langchain.agents import create_agent
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
-from langchain_core.runnables.config import RunnableConfig
+from langchain_core.runnables.config import RunnableConfig, merge_configs
 
 from legal_assistant.config import settings
 from legal_assistant.knowledge.legal_qa import append_disclaimer, format_citations
@@ -58,12 +58,10 @@ def _extract_final_answer(messages: list[BaseMessage]) -> str:
 
 
 def _merge_run_config(llm_config: RunnableConfig) -> RunnableConfig:
-    """合并 Langfuse callbacks 与 Agent 步数上限。"""
-    # 每轮工具调用 ≈ agent + tools 两个图节点
+    """合并 LangGraph 传入的 callbacks 与 Agent 步数上限。"""
+    # 每轮工具调用 ≈ model + tools 两个图节点
     recursion_limit = settings.agent_max_tool_rounds * 2 + 3
-    if not llm_config:
-        return {"recursion_limit": recursion_limit}
-    return {**llm_config, "recursion_limit": recursion_limit}
+    return merge_configs(llm_config, {"recursion_limit": recursion_limit})
 
 
 async def run_tool_agent(

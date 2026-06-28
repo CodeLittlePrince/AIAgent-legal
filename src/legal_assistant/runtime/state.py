@@ -3,6 +3,8 @@
 from collections.abc import Awaitable
 from typing import Any, Protocol, TypedDict
 
+from langchain_core.runnables.config import RunnableConfig
+
 from legal_assistant.knowledge.retriever import RetrievedDoc
 from legal_assistant.tools.base import WeatherResult
 
@@ -24,4 +26,6 @@ class AgentState(TypedDict, total=False):
 
 
 class AgentNode(Protocol):
-    def __call__(self, state: AgentState) -> Awaitable[dict[str, Any]]: ...
+    def __call__(
+        self, state: AgentState, config: RunnableConfig
+    ) -> Awaitable[dict[str, Any]]: ...

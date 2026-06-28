@@ -91,22 +91,20 @@ def trace_chat(session_id: str, *, user_message: str | None = None) -> Iterator[
         yield trace_id
         return
 
-    bind_langchain_handler(trace_id)
     trace_input = {"message": user_message} if user_message else None
-    try:
-        with propagate_attributes(session_id=session_id, trace_name="chat-response"):
-            with client.start_as_current_observation(
-                name="chat-response",
-                as_type="span",
-                trace_context={"trace_id": trace_id},
-                input=trace_input,
-            ):
-                try:
-                    yield trace_id
-                finally:
-                    client.flush()
-    finally:
-        reset_langchain_handler()
+    with propagate_attributes(session_id=session_id, trace_name="chat-response"):
+        with client.start_as_current_observation(
+            name="chat-response",
+            as_type="span",
+            trace_context={"trace_id": trace_id},
+            input=trace_input,
+        ):
+            bind_langchain_handler()
+            try:
+                yield trace_id
+            finally:
+                reset_langchain_handler()
+                client.flush()
 
 
 class span:

@@ -1,7 +1,10 @@
 """LangChain / LangGraph 与 Langfuse 的集成辅助。
 
 通过 ``CallbackHandler`` 自动采集 LLM 调用的 model、token 用量与 generation 类型，
-并在单次请求内用 contextvar 传递 handler，供图节点中的 ``ainvoke`` 复用。
+并在单次请求内用 contextvar 传递 handler，供节点内的 ``ainvoke`` 复用。
+
+注意：外层 ``StateGraph`` 的 ``ainvoke`` 不要传入该 handler，否则 Langfuse
+会把外层编排图与内层 ``create_agent`` 图合并成一张错误的 Agent Graph。
 """
 
 from __future__ import annotations
@@ -16,11 +19,11 @@ from legal_assistant.observability.langfuse_client import get_langfuse
 _handler_var: ContextVar[Any | None] = ContextVar("langfuse_langchain_handler", default=None)
 
 
-def bind_langchain_handler(trace_id: str) -> Any | None:
+def bind_langchain_handler() -> Any | None:
     """为当前 async 上下文绑定 LangChain CallbackHandler。
 
-    Args:
-        trace_id: 与 ``trace_chat`` 根 span 一致的 trace id。
+    须在 ``start_as_current_observation`` 上下文内调用，以便 LangGraph
+    observation 自动继承当前 trace 并嵌套在根 span 之下。
 
     Returns:
         已绑定的 ``CallbackHandler``，Langfuse 未启用时为 ``None``。
@@ -35,7 +38,7 @@ def bind_langchain_handler(trace_id: str) -> Any | None:
         _handler_var.set(None)
         return None
 
-    handler = CallbackHandler(trace_context={"trace_id": trace_id})
+    handler = CallbackHandler()
     _handler_var.set(handler)
     return handler
 

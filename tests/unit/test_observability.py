@@ -59,7 +59,7 @@ def test_langchain_handler_lifecycle(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ALL_PROXY", "socks5://127.0.0.1:7890")
     reset_langfuse_client()
 
-    handler = bind_langchain_handler("abc123" * 4)
+    handler = bind_langchain_handler()
     assert handler is not None
     assert langchain_invoke_config()["callbacks"] == [handler]
     reset_langchain_handler()

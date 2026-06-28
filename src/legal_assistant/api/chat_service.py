@@ -13,7 +13,6 @@ from typing import Any
 from legal_assistant.api.schemas import Citation
 from legal_assistant.config import settings
 from legal_assistant.observability.langfuse_client import get_langfuse_client
-from legal_assistant.observability.langchain_tracing import langchain_invoke_config
 from legal_assistant.observability.metrics import (
     record_chat_latency,
     record_chat_request,
@@ -95,7 +94,6 @@ async def execute_chat(
                 "session_id": resolved_session_id,
                 "messages": messages,
             },
-            config=langchain_invoke_config(),
         )
 
         tools_used = list(result.get("tools_used") or [])
