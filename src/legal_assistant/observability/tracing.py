@@ -145,7 +145,7 @@ class span:
         self._observation = self._context.__enter__()
         return None
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(self, exc_type, exc, tb) -> bool | None:
         """退出上下文，结束 observation；若有异常会传递给 Langfuse 上下文。"""
         if self._client is None or self._observation is None:
             return None
